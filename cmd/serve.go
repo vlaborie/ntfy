@@ -134,6 +134,7 @@ func execServe(c *cli.Context) error {
 	listenUnixMode := c.Int("listen-unix-mode")
 	keyFile := c.String("key-file")
 	certFile := c.String("cert-file")
+	caFile := c.String("ca-file")
 	firebaseKeyFile := c.String("firebase-key-file")
 	webPushPrivateKey := c.String("web-push-private-key")
 	webPushPublicKey := c.String("web-push-public-key")
@@ -266,6 +267,8 @@ func execServe(c *cli.Context) error {
 		return errors.New("if set, key file must exist")
 	} else if certFile != "" && !util.FileExists(certFile) {
 		return errors.New("if set, certificate file must exist")
+	} else if caFile != "" && !util.FileExists(caFile) {
+		return errors.New("if set, certificate authority file must exist")
 	} else if listenHTTPS != "" && (keyFile == "" || certFile == "") {
 		return errors.New("if listen-https is set, both key-file and cert-file must be set")
 	} else if smtpSenderAddr != "" && (baseURL == "" || smtpSenderFrom == "") {
@@ -358,6 +361,7 @@ func execServe(c *cli.Context) error {
 	conf.ListenUnixMode = fs.FileMode(listenUnixMode)
 	conf.KeyFile = keyFile
 	conf.CertFile = certFile
+	conf.CaFile = caFile
 	conf.FirebaseKeyFile = firebaseKeyFile
 	conf.CacheFile = cacheFile
 	conf.CacheDuration = cacheDuration

@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -274,7 +277,21 @@ func (s *Server) Run() error {
 		}()
 	}
 	if s.config.ListenHTTPS != "" {
-		s.httpsServer = &http.Server{Addr: s.config.ListenHTTPS, Handler: mux}
+		if s.config.CaFile != "" {
+			caCert, err := ioutil.ReadFile(s.config.CaFile)
+			if err != nil {
+				errChan <- err
+			}
+			caCertPool := x509.NewCertPool()
+			caCertPool.AppendCertsFromPEM(caCert)
+			tlsConfig := &tls.Config{
+				ClientCAs:  caCertPool,
+				ClientAuth: tls.VerifyClientCertIfGiven,
+			}
+			s.httpsServer = &http.Server{Addr: s.config.ListenHTTPS, Handler: mux, TLSConfig: tlsConfig}
+		} else {
+			s.httpsServer = &http.Server{Addr: s.config.ListenHTTPS, Handler: mux}
+		}
 		go func() {
 			errChan <- s.httpsServer.ListenAndServeTLS(s.config.CertFile, s.config.KeyFile)
 		}()

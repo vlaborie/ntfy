@@ -82,6 +82,7 @@ type Config struct {
 	ListenUnixMode                       fs.FileMode
 	KeyFile                              string
 	CertFile                             string
+	CaFile                               string
 	FirebaseKeyFile                      string
 	CacheFile                            string
 	CacheDuration                        time.Duration
@@ -174,6 +175,7 @@ func NewConfig() *Config {
 		ListenUnixMode:                       0,
 		KeyFile:                              "",
 		CertFile:                             "",
+		CaFile:                               "",
 		FirebaseKeyFile:                      "",
 		CacheFile:                            "",
 		CacheDuration:                        DefaultCacheDuration,
