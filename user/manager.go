@@ -2,6 +2,7 @@
 package user
 
 import (
+	"crypto/x509"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -509,6 +510,17 @@ func (a *Manager) AuthenticateToken(token string) (*User, error) {
 		return nil, ErrUnauthenticated
 	}
 	user.Token = token
+	return user, nil
+}
+
+// AuthenticateCertificate checks a x509 certificate commonName and returns a User if correct
+func (a *Manager) AuthenticateCertificate(cert *x509.Certificate) (*User, error) {
+	commonName := cert.Subject.CommonName
+	user, err := a.User(commonName)
+	if err != nil {
+		log.Tag(tag).Field("common_name", commonName).Err(err).Trace("Authentication of certificate failed")
+		return nil, ErrUnauthenticated
+	}
 	return user, nil
 }
 

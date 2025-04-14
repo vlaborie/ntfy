@@ -1944,6 +1944,15 @@ func (s *Server) maybeAuthenticate(r *http.Request) (*visitor, error) {
 	// Read "Authorization" header value, and exit out early if it's not set
 	ip := extractIPAddress(r, s.config.BehindProxy)
 	vip := s.visitor(ip, nil)
+	// Trying to auth with certificate if provided
+	if r.TLS != nil && len(r.TLS.VerifiedChains) > 0 && len(r.TLS.VerifiedChains[0]) > 0 {
+		u, err := s.authenticateCertificate(r)
+		if err != nil {
+			return vip, err
+		}
+		// Authentication with certificate was successful
+		return s.visitor(ip, u), nil
+	}
 	if s.userManager == nil {
 		return vip, nil
 	}
@@ -2022,6 +2031,14 @@ func (s *Server) authenticateBearerAuth(r *http.Request, token string) (*user.Us
 		LastAccess: time.Now(),
 		LastOrigin: ip,
 	})
+	return u, nil
+}
+
+func (s *Server) authenticateCertificate(r *http.Request) (*user.User, error) {
+	u, err := s.userManager.AuthenticateCertificate(r.TLS.VerifiedChains[0][0])
+	if err != nil {
+		return nil, err
+	}
 	return u, nil
 }
 
